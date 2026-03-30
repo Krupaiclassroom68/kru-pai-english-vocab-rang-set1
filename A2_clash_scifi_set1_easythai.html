@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Neural Sound Arena – Galaxy Set 2</title>
+<style>
+  :root{
+    --bg:#030712;
+    --bg2:#0f172a;
+    --panel:rgba(5,10,27,.78);
+    --panel2:rgba(8,16,40,.86);
+    --line:rgba(88,216,255,.36);
+    --neon:#58d8ff;
+    --neon2:#9b6bff;
+    --good:#38f2b4;
+    --warn:#ffb84d;
+    --bad:#ff5374;
+    --text:#e9f7ff;
+    --muted:#9dc7d8;
+    --shadow:0 24px 60px rgba(0,0,0,.48);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;background:
+    radial-gradient(circle at 18% 20%, rgba(88,216,255,.11), transparent 24%),
+    radial-gradient(circle at 82% 14%, rgba(155,107,255,.12), transparent 20%),
+    radial-gradient(circle at 50% 78%, rgba(60,130,255,.11), transparent 25%),
+    linear-gradient(135deg,var(--bg),var(--bg2));
+    color:var(--text);overflow-x:hidden}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:
+    linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+    background-size:42px 42px;opacity:.4}
+
+  .stars,.planets{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+  .star{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;opacity:.75;box-shadow:0 0 8px #fff;animation:twinkle linear infinite}
+  @keyframes twinkle{0%,100%{opacity:.18;transform:scale(.8)}50%{opacity:.95;transform:scale(1.5)}}
+  .planet{position:absolute;border-radius:50%;filter:drop-shadow(0 0 22px rgba(88,216,255,.24));opacity:.92;animation:floatPlanet ease-in-out infinite}
+  .planet::after{content:"";position:absolute;inset:12%;border-radius:50%;background:radial-gradient(circle at 35% 35%, rgba(255,255,255,.42), transparent 30%)}
+  .planet.p1{width:170px;height:170px;left:-30px;top:12%;background:radial-gradient(circle at 30% 30%, #8ff7ff, #2a8dff 52%, #071e4a 80%);animation-duration:14s}
+  .planet.p2{width:120px;height:120px;right:6%;top:8%;background:radial-gradient(circle at 36% 36%, #e9beff, #8b5cf6 56%, #2a1454 80%);animation-duration:12s}
+  .planet.p3{width:240px;height:240px;right:-60px;bottom:12%;background:radial-gradient(circle at 34% 34%, #c7ffb7, #3ecf8e 52%, #083b34 80%);animation-duration:18s}
+  .planet.p4{width:84px;height:84px;left:10%;bottom:10%;background:radial-gradient(circle at 35% 35%, #ffe29a, #ff9f43 58%, #5a2600 84%);animation-duration:10s}
+  .planet.ring::before{content:"";position:absolute;left:-18%;right:-18%;top:42%;height:22%;border:2px solid rgba(255,255,255,.45);border-radius:50%;transform:rotate(-18deg);box-shadow:0 0 14px rgba(255,255,255,.18)}
+  @keyframes floatPlanet{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-14px) translateX(8px)}}
+
+  .container{position:relative;z-index:1;max-width:1220px;margin:0 auto;padding:18px}
+  .screen{display:none;min-height:100vh;align-items:center;justify-content:center;padding:16px 0 28px}
+  .screen.active{display:flex}
+  .panel{width:min(100%,1080px);background:linear-gradient(180deg,rgba(8,18,46,.72),rgba(4,9,24,.84));backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:30px;box-shadow:var(--shadow);padding:20px;position:relative;overflow:hidden}
+  .panel::before{content:"";position:absolute;inset:0;background:linear-gradient(118deg,transparent 0 28%, rgba(255,255,255,.18) 40%, transparent 54%);transform:translateX(-120%);animation:scan 8s linear infinite;pointer-events:none}
+  @keyframes scan{to{transform:translateX(120%)}}
+  .panel::after{content:"";position:absolute;inset:0;border-radius:30px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);pointer-events:none}
+
+  .hero{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;align-items:center}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:rgba(9,24,58,.72);box-shadow:0 0 14px rgba(88,216,255,.12);font-weight:900;color:var(--neon);margin-bottom:12px}
+  h1{margin:.15rem 0 .75rem;line-height:.95;font-size:clamp(2rem,5vw,4rem)}
+  .glow{color:var(--neon);text-shadow:0 0 18px rgba(88,216,255,.55)}
+  .sub{font-size:clamp(1rem,2vw,1.18rem);line-height:1.7;color:#d9f1ff;background:rgba(7,20,47,.62);border:1px solid var(--line);border-radius:22px;padding:14px 16px}
+  .name-row,.actions,.hud,.buttons-inline{display:flex;gap:10px;flex-wrap:wrap}
+  .name-row{margin-top:16px}
+  input[type=text]{flex:1;min-width:240px;background:rgba(4,12,30,.88);color:var(--text);border:1px solid rgba(88,216,255,.36);outline:none;border-radius:18px;padding:16px 18px;font-size:1.08rem;font-weight:800;box-shadow:inset 0 0 14px rgba(88,216,255,.08)}
+  .btn{border:none;border-radius:18px;padding:14px 18px;font-weight:900;font-size:1rem;cursor:pointer;color:white;transition:transform .12s ease, filter .12s ease, box-shadow .12s ease;box-shadow:0 10px 22px rgba(0,0,0,.26)}
+  .btn:hover{transform:translateY(-2px);filter:brightness(1.05)}
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:linear-gradient(180deg,#59e7ff,#0788ff)}
+  .btn-purple{background:linear-gradient(180deg,#b18cff,#6d38ff)}
+  .btn-green{background:linear-gradient(180deg,#49ffcc,#00a882)}
+  .btn-ghost{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#edf8ff}
+  .btn-warn{background:linear-gradient(180deg,#ffd46a,#ff922b);color:#432000}
+
+  .feature-grid,.summary-grid,.tips-grid{display:grid;gap:14px}
+  .feature-grid{grid-template-columns:repeat(2,1fr)}
+  .card,.tip,.summary-card{background:rgba(6,17,42,.78);border:1px solid rgba(88,216,255,.22);border-radius:22px;padding:16px;box-shadow:inset 0 0 16px rgba(88,216,255,.04)}
+  .card b,.tip b{color:var(--neon)}
+  .tip{line-height:1.75;font-weight:800}
+  .summary-grid{grid-template-columns:.84fr 1.16fr}
+  .score-big{font-size:clamp(2.2rem,7vw,4.3rem);font-weight:1000;color:var(--neon);text-shadow:0 0 18px rgba(88,216,255,.46);text-align:center}
+  .center{text-align:center}.small{font-size:.95rem;color:var(--muted)}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .hud{align-items:center}
+  .pill{padding:10px 14px;border-radius:999px;background:rgba(7,18,42,.84);border:1px solid rgba(88,216,255,.32);color:var(--neon);font-weight:900;box-shadow:0 0 14px rgba(88,216,255,.14)}
+  .main-card{background:linear-gradient(180deg,rgba(7,17,40,.86),rgba(5,11,28,.95));border:1px solid rgba(88,216,255,.2);border-radius:28px;padding:16px}
+  .title-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .title-row h2{margin:0;font-size:clamp(1.2rem,2.8vw,2rem)}
+  .signal-zone{background:linear-gradient(180deg,rgba(8,26,62,.72),rgba(6,16,36,.92));border:1px solid rgba(88,216,255,.22);border-radius:26px;padding:16px}
+  .signal-top{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+  .instruction{font-size:clamp(1rem,2vw,1.2rem);font-weight:800;color:#e8fbff}
+  .countdown{font-size:clamp(2rem,7vw,4rem);font-weight:1000;color:var(--bad);text-shadow:0 0 16px rgba(255,83,116,.34);min-width:100px;text-align:right}
+  .subline{min-height:42px;color:var(--muted);font-weight:800;margin:10px 0 8px}
+
+  .arena{position:relative;height:min(55vh,440px);min-height:320px;margin-top:12px;border-radius:28px;overflow:hidden;background:
+    radial-gradient(circle at 50% 50%, rgba(88,216,255,.08), transparent 32%),
+    linear-gradient(180deg, rgba(4,11,28,.84), rgba(2,6,17,.96));
+    border:1px solid rgba(88,216,255,.22)}
+  .arena::before{content:"";position:absolute;inset:0;background:
+    radial-gradient(circle at 10% 15%, rgba(255,255,255,.08), transparent 10%),
+    radial-gradient(circle at 86% 18%, rgba(155,107,255,.14), transparent 10%),
+    radial-gradient(circle at 80% 80%, rgba(88,216,255,.10), transparent 12%),
+    radial-gradient(circle at 20% 76%, rgba(255,220,120,.08), transparent 12%);pointer-events:none}
+  .arena::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent, rgba(88,216,255,.035), transparent);animation:radar 3.5s linear infinite;pointer-events:none}
+  @keyframes radar{0%{transform:translateY(-100%)}100%{transform:translateY(100%)}}
+
+  .orb{position:absolute;width:132px;height:132px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;padding:14px;font-size:clamp(1.2rem,3vw,1.7rem);font-weight:1000;color:#fff;cursor:pointer;user-select:none;touch-action:manipulation;border:2px solid rgba(255,255,255,.24);box-shadow:0 0 22px rgba(88,216,255,.28), inset 0 0 18px rgba(255,255,255,.08);background:
+    radial-gradient(circle at 30% 28%, rgba(255,255,255,.9), rgba(255,255,255,.15) 18%, transparent 19%),
+    radial-gradient(circle at 35% 35%, #6cf2ff, #0b8dff 58%, #071a43 78%);
+    transition:transform .14s ease, filter .14s ease, opacity .3s ease}
+  .orb:nth-child(2n){background:radial-gradient(circle at 30% 28%, rgba(255,255,255,.9), rgba(255,255,255,.15) 18%, transparent 19%),radial-gradient(circle at 35% 35%, #dcb4ff, #8b5cf6 58%, #260d56 78%)}
+  .orb:nth-child(3n){background:radial-gradient(circle at 30% 28%, rgba(255,255,255,.9), rgba(255,255,255,.15) 18%, transparent 19%),radial-gradient(circle at 35% 35%, #a4ffd8, #00c08b 58%, #03392b 78%)}
+  .orb:hover{filter:brightness(1.08)}
+  .orb-label{position:relative;z-index:2;text-shadow:0 2px 10px rgba(0,0,0,.45)}
+  .orb .letter{position:absolute;top:10px;left:12px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:.95rem;font-weight:1000;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28)}
+  .orb.explode{animation:explode .62s ease forwards}
+  @keyframes explode{0%{transform:scale(1);opacity:1}35%{transform:scale(1.18)}100%{transform:scale(1.95);opacity:0;filter:blur(6px)}}
+
+  .meaning-wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+  .meaning-btn{min-height:96px;border-radius:22px;border:1px solid rgba(88,216,255,.26);background:linear-gradient(180deg, rgba(11,28,66,.95), rgba(5,14,34,.95));color:#ecfbff;font-weight:900;font-size:clamp(1rem,2vw,1.15rem);padding:12px;cursor:pointer;box-shadow:0 0 16px rgba(88,216,255,.08)}
+  .meaning-btn:hover{filter:brightness(1.06)}
+  .meaning-btn .num{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;margin-right:6px;background:rgba(88,216,255,.12);border:1px solid rgba(88,216,255,.28);color:var(--neon)}
+  .feedback{min-height:44px;text-align:center;font-size:clamp(1rem,2.2vw,1.22rem);font-weight:1000;margin-top:12px}
+
+  table{width:100%;border-collapse:collapse;background:rgba(4,12,30,.72);border-radius:18px;overflow:hidden}
+  th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left;font-size:.95rem}
+  th{background:rgba(88,216,255,.10);color:var(--neon)}
+  .review-box{max-height:56vh;overflow:auto;border-radius:18px;border:1px solid rgba(88,216,255,.18)}
+  .tag{display:inline-block;padding:8px 12px;border-radius:999px;font-weight:900;background:rgba(88,216,255,.12);border:1px solid rgba(88,216,255,.26);color:var(--neon)}
+
+  #overlay{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;z-index:25}
+  #overlay span{font-size:min(28vw,180px);transform:scale(.2);opacity:0;text-shadow:0 0 26px rgba(255,255,255,.25)}
+  #overlay.show span{animation:pop .95s ease forwards}
+  @keyframes pop{0%{transform:scale(.25);opacity:0}18%{transform:scale(1.18);opacity:1}50%{transform:scale(1)}100%{transform:scale(.88) translateY(-12px);opacity:0}}
+
+  @media (max-width:900px){
+    .hero,.summary-grid,.feature-grid,.meaning-wrap{grid-template-columns:1fr}
+    .signal-top{grid-template-columns:1fr}
+    .countdown{text-align:left}
+    .arena{height:360px}
+    .orb{width:108px;height:108px;font-size:1.1rem}
+  }
+</style>
+</head>
+<body>
+  <div class="stars" id="stars"></div>
+  <div class="planets">
+    <div class="planet p1 ring"></div>
+    <div class="planet p2"></div>
+    <div class="planet p3 ring"></div>
+    <div class="planet p4"></div>
+  </div>
+  <div id="overlay"><span id="overlayEmoji">🚀</span></div>
+
+  <div class="container">
+    <section id="screenStart" class="screen active">
+      <div class="panel">
+        <div class="hero">
+          <div>
+            <div class="badge">🚀 Galaxy Set 2 • 30 Signals • Physics Orbs • 7 sec</div>
+            <h1><span class="glow">Neural Sound Arena</span><br>Galaxy Signal Clash</h1>
+            <div class="sub">
+              ด่านนี้อัปเกรดเป็น <b>จักรวาลไซไฟเต็มระบบ</b> 🌌<br>
+              มีดาวเคราะห์ลอยด้านหลัง, เสียง ambient อวกาศ, และลูกบอลคำศัพท์วิ่งแบบ <b>physics จริง</b> ภายในสนามพลังงาน<br>
+              ฟังสัญญาณ → กดลูกบอลคำให้ถูก → ถอดรหัสความหมาย → เก็บคะแนนรวมเต็ม <b>60</b>
+            </div>
+            <div class="name-row">
+              <input id="playerName" type="text" placeholder="ใส่ชื่อนักบิน AI ตรงนี้จ้า" />
+              <button class="btn btn-ghost" id="btnHow">วิธีเล่น</button>
+              <button class="btn btn-primary" id="btnStart">เริ่มภารกิจ</button>
+            </div>
+          </div>
+          <div class="feature-grid">
+            <div class="card">🪐 <b>Floating Planets</b><br>บรรยากาศอวกาศเคลื่อนไหวตลอดเวลา</div>
+            <div class="card">🎧 <b>Ambient Space</b><br>มีเสียงพื้นหลังลึกลับ ชวนโฟกัส</div>
+            <div class="card">⚛️ <b>True Physics</b><br>ลูกบอลวิ่งชนขอบ เด้งจริง ไม่ใช่ปุ่มนิ่ง ๆ</div>
+            <div class="card">🐢 <b>Slow Signal</b><br>มีปุ่มฟังช้า ช่วยเด็กแยกเสียงใกล้กัน</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="screenHow" class="screen">
+      <div class="panel">
+        <div class="badge">🧠 Mission Guide</div>
+        <h1 style="font-size:clamp(1.8rem,4vw,3rem)"><span class="glow">วิธีเล่น</span> Galaxy Signal Clash</h1>
+        <div class="tips-grid">
+          <div class="tip">1) กด <b>Listen Signal</b> เพื่อฟังคำจาก AI ก่อน แล้วรีบสังเกตลูกบอลคำที่กำลังวิ่งไปมาในสนาม</div>
+          <div class="tip">2) ลูกบอลวิ่งแบบ physics จริง ถ้าเจอคำที่ตรงกับเสียง ให้กดให้ไวภายใน <b>7 วินาที</b> ⏳</div>
+          <div class="tip">3) ถ้าถูก ลูกบอลจะ <b>ระเบิดเป็นพลังงาน</b> แล้วปลดล็อกด่านเลือกความหมายทันที 💥</div>
+          <div class="tip">4) เลือกความหมายถูก = <b>2 คะแนน</b> / ถ้าฟังถูกแต่แปลผิด = <b>1 คะแนน</b> / ถ้าฟังผิด = <b>0 คะแนน</b></div>
+          <div class="tip">5) ใช้ปุ่ม <b>Slow Signal</b> เมื่อต้องการฟังช้าลงเพื่อช่วยแยกเสียงที่ใกล้กัน</div>
+          <div class="tip">6) เมื่อจบจะมี <b>หน้าสรุป + ตารางเฉลยครบ 30 ข้อ</b> ให้ย้อนดูว่าพลาดตรงไหน</div>
+        </div>
+        <div class="actions" style="margin-top:16px;justify-content:center">
+          <button class="btn btn-ghost" id="btnBackHome">กลับหน้าแรก</button>
+          <button class="btn btn-green" id="btnStart2">เริ่มเลย</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="screenGame" class="screen">
+      <div class="panel">
+        <div class="topbar">
+          <div class="hud">
+            <div class="pill" id="hudName">👤 Pilot: -</div>
+            <div class="pill" id="hudRound">🚀 Signal 1 / 30</div>
+            <div class="pill" id="hudScore">⭐ 0 / 60</div>
+            <div class="pill" id="hudStage">🧠 Neural Scan</div>
+          </div>
+          <div class="buttons-inline">
+            <button class="btn btn-ghost" id="btnMute">🔈 Ambient On</button>
+            <button class="btn btn-ghost" id="btnHome">หน้าแรก</button>
+          </div>
+        </div>
+
+        <div class="main-card">
+          <div class="title-row">
+            <h2 id="gameTitle"><span class="glow">Decode the Signal</span></h2>
+            <div class="badge" style="margin:0">Galaxy Set 2</div>
+          </div>
+          <div class="signal-zone">
+            <div class="signal-top">
+              <div class="instruction" id="instruction">กดฟังสัญญาณ แล้วแตะลูกบอลคำที่ตรงกับเสียง</div>
+              <div class="countdown" id="timerText">7</div>
+            </div>
+            <div class="subline" id="subline">พร้อมแล้วค่อยกดฟังนะ นักบิน 🚀</div>
+            <div class="actions" style="justify-content:center">
+              <button class="btn btn-primary" id="btnListen">🔊 Listen Signal</button>
+              <button class="btn btn-purple" id="btnSlow">🐢 Slow Signal</button>
+              <button class="btn btn-warn" id="btnNext" style="display:none">Signal ต่อไป</button>
+            </div>
+            <div class="arena" id="arena"></div>
+            <div id="meaningWrap" class="meaning-wrap" style="display:none"></div>
+            <div class="feedback" id="feedback"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="screenSummary" class="screen">
+      <div class="panel">
+        <div class="badge">🏁 Mission Complete</div>
+        <h1 style="font-size:clamp(1.8rem,4.6vw,3.2rem)"><span class="glow">สรุปผลภารกิจ</span> Galaxy Signal Clash</h1>
+        <div class="summary-grid">
+          <div class="summary-card">
+            <div class="small center">นักบิน</div>
+            <div class="score-big" id="sumName">-</div>
+            <div class="center" style="margin:4px 0 10px"><span class="tag" id="sumRank">Sound Cadet</span></div>
+            <div class="score-big" id="sumScore">0 / 60</div>
+            <div class="center small" id="sumText">กำลังประเมิน...</div>
+          </div>
+          <div class="summary-card">
+            <table>
+              <tr><th>สถิติภารกิจ</th><th class="center">ผลลัพธ์</th></tr>
+              <tr><td>ฟังสัญญาณถูก</td><td class="center" id="stSound">0 / 30</td></tr>
+              <tr><td>เลือกความหมายถูก</td><td class="center" id="stMeanRight">0</td></tr>
+              <tr><td>เลือกความหมายผิด</td><td class="center" id="stMeanWrong">0</td></tr>
+              <tr><td>พลาด / หมดเวลา</td><td class="center" id="stMiss">0</td></tr>
+              <tr><td>เวลาเฉลี่ยต่อสัญญาณ</td><td class="center" id="stTime">0 วิ</td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="actions" style="margin-top:16px;justify-content:center">
+          <button class="btn btn-primary" id="btnReview">ดูเฉลย</button>
+          <button class="btn btn-green" id="btnReplay">เล่นอีกครั้ง</button>
+        </div>
+        <div id="reviewWrap" style="display:none;margin-top:16px">
+          <div class="summary-card">
+            <div class="review-box">
+              <table>
+                <thead>
+                  <tr><th>#</th><th>คำที่ได้ยิน</th><th>ความหมายที่ถูก</th><th>ตัวเลือกในสนาม</th><th>ผลของผู้เล่น</th></tr>
+                </thead>
+                <tbody id="reviewBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+<script>
+const bank = [
+  {target:"rice", meaning:"ข้าว", options:["rice","right","rock","rain"]},
+  {target:"rise", meaning:"ลุกขึ้น / เพิ่มขึ้น", options:["rise","run","red","road"]},
+  {target:"glass", meaning:"แก้ว / กระจก", options:["glass","glad","guard","good"]},
+  {target:"grass", meaning:"หญ้า", options:["grass","green","grape","ground"]},
+  {target:"berry", meaning:"ผลไม้ตระกูลเบอร์รี", options:["berry","baby","book","yellow"]},
+  {target:"very", meaning:"มาก", options:["very","visit","yellow","happy"]},
+  {target:"walk", meaning:"เดิน", options:["walk","jump","read","sleep"]},
+  {target:"work", meaning:"ทำงาน", options:["work","play","wash","study"]},
+  {target:"code", meaning:"รหัส", options:["code","book","lamp","star"]},
+  {target:"coat", meaning:"เสื้อโค้ต", options:["coat","shirt","table","cloud"]},
+  {target:"beach", meaning:"ชายหาด", options:["beach","banana","window","rocket"]},
+  {target:"peach", meaning:"ลูกพีช", options:["peach","pencil","ticket","garden"]},
+  {target:"pool", meaning:"สระน้ำ", options:["pool","park","cake","moon"]},
+  {target:"pull", meaning:"ดึง", options:["pull","push","paint","dance"]},
+  {target:"desk", meaning:"โต๊ะเรียน / โต๊ะทำงาน", options:["desk","chair","pencil","window"]},
+  {target:"disk", meaning:"แผ่นดิสก์", options:["disk","clock","paper","rabbit"]},
+  {target:"man", meaning:"ผู้ชาย", options:["man","girl","book","sun"]},
+  {target:"men", meaning:"ผู้ชายหลายคน", options:["men","boys","trees","cars"]},
+  {target:"pack", meaning:"แพ็ก / ห่อ", options:["pack","box","bag","carry"]},
+  {target:"back", meaning:"ด้านหลัง / กลับ", options:["back","front","home","again"]},
+  {target:"night", meaning:"กลางคืน", options:["night","morning","school","yellow"]},
+  {target:"light", meaning:"แสง", options:["light","lamp","sun","bright"]},
+  {target:"chair", meaning:"เก้าอี้", options:["chair","table","window","school"]},
+  {target:"share", meaning:"แบ่งปัน", options:["share","give","help","open"]},
+  {target:"fan", meaning:"พัดลม / แฟนคลับ", options:["fan","lamp","clock","phone"]},
+  {target:"van", meaning:"รถตู้", options:["van","bus","train","boat"]},
+  {target:"road", meaning:"ถนน", options:["road","bridge","school","market"]},
+  {target:"rode", meaning:"ขี่ / เดินทางโดย... (อดีต)", options:["rode","ran","walked","slept"]},
+  {target:"soap", meaning:"สบู่", options:["soap","towel","brush","water"]},
+  {target:"soup", meaning:"ซุป", options:["soup","rice","bread","juice"]}
+];
+
+const screens = ["screenStart","screenHow","screenGame","screenSummary"];
+const $ = id => document.getElementById(id);
+const arena = $("arena");
+let player = "";
+let order = [];
+let currentIndex = 0;
+let currentItem = null;
+let phase = "sound";
+let score = 0;
+let soundCorrect = 0;
+let meaningRight = 0;
+let meaningWrong = 0;
+let soundMiss = 0;
+let totalSecondsUsed = 0;
+let results = [];
+let timer = 7;
+let timerId = null;
+let voicesLoaded = false;
+let selectedVoice = null;
+let animId = null;
+let orbs = [];
+let physicsActive = false;
+let audioCtx = null;
+let ambientNodes = null;
+let ambientEnabled = true;
+let audioUnlocked = false;
+
+function showScreen(id){ screens.forEach(s => $(s).classList.remove('active')); $(id).classList.add('active'); }
+function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function choiceMeanings(item){ const others = shuffle(bank.filter(x => x.target !== item.target).map(x => x.meaning)); return shuffle([item.meaning, others[0], others[1]]); }
+function overlay(symbol){ const wrap=$("overlay"), em=$("overlayEmoji"); em.textContent=symbol; wrap.classList.remove("show"); void wrap.offsetWidth; wrap.classList.add("show"); }
+function feedback(html){ $("feedback").innerHTML = html; }
+function updateHud(){
+  $("hudRound").textContent = `🚀 Signal ${currentIndex+1} / 30`;
+  $("hudScore").textContent = `⭐ ${score} / 60`;
+  $("hudStage").textContent = phase === 'meaning' ? '🧩 Meaning Decode' : '🧠 Neural Scan';
+}
+
+function initStars(){
+  const wrap=$("stars");
+  for(let i=0;i<90;i++){
+    const s=document.createElement('span');
+    s.className='star';
+    s.style.left=Math.random()*100+'%';
+    s.style.top=Math.random()*100+'%';
+    const size=Math.random()*2.6+1;
+    s.style.width=s.style.height=size+'px';
+    s.style.animationDuration=(Math.random()*3+2)+'s';
+    s.style.animationDelay=(Math.random()*2)+'s';
+    wrap.appendChild(s);
+  }
+}
+
+function ensureAudio(){
+  if(audioCtx) return audioCtx;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function unlockAudio(){
+  if(audioUnlocked) return;
+  audioUnlocked = true;
+  const ctx = ensureAudio();
+  if(ctx.state === 'suspended') ctx.resume();
+  loadVoices();
+  startAmbient();
+}
+function loadVoices(){
+  const voices = speechSynthesis.getVoices();
+  if(!voices.length) return;
+  selectedVoice = voices.find(v=>/en-US|en_GB|en-GB/i.test(v.lang)) || voices.find(v=>/en/i.test(v.lang)) || voices[0];
+  voicesLoaded = true;
+}
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+function beep(freq=500,dur=.08,type='sine',vol=.03){
+  const ctx = ensureAudio();
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = type; o.frequency.value = freq; g.gain.value = vol;
+  o.connect(g); g.connect(ctx.destination); o.start();
+  g.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + dur);
+  o.stop(ctx.currentTime + dur);
+}
+const clickSound=()=>beep(650,.05,'square',.02);
+const tickSound=()=>beep(940,.025,'square',.012);
+const successSound=()=>{beep(760,.07,'triangle',.04); setTimeout(()=>beep(980,.09,'triangle',.045),80); setTimeout(()=>beep(1280,.12,'triangle',.05),170)};
+const failSound=()=>{beep(240,.12,'sawtooth',.035); setTimeout(()=>beep(180,.18,'sawtooth',.03),110)};
+const explodeSound=()=>{beep(1200,.09,'sawtooth',.045); setTimeout(()=>beep(860,.13,'square',.03),60)};
+
+function createNoiseBuffer(ctx, seconds=2){
+  const buffer = ctx.createBuffer(1, seconds * ctx.sampleRate, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<data.length;i++) data[i] = (Math.random()*2-1) * .22;
+  return buffer;
+}
+function startAmbient(){
+  const ctx = ensureAudio();
+  if(ambientNodes) return;
+  const master = ctx.createGain(); master.gain.value = ambientEnabled ? .04 : 0;
+  master.connect(ctx.destination);
+
+  const osc1 = ctx.createOscillator();
+  const osc2 = ctx.createOscillator();
+  const g1 = ctx.createGain(); const g2 = ctx.createGain();
+  osc1.type='sine'; osc2.type='triangle';
+  osc1.frequency.value = 62; osc2.frequency.value = 94;
+  g1.gain.value=.028; g2.gain.value=.012;
+  osc1.connect(g1); osc2.connect(g2); g1.connect(master); g2.connect(master);
+  osc1.start(); osc2.start();
+
+  const noise = ctx.createBufferSource();
+  noise.buffer = createNoiseBuffer(ctx, 3);
+  noise.loop = true;
+  const band = ctx.createBiquadFilter(); band.type='bandpass'; band.frequency.value = 700; band.Q.value = .9;
+  const ng = ctx.createGain(); ng.gain.value = .008;
+  noise.connect(band); band.connect(ng); ng.connect(master); noise.start();
+
+  const lfo = ctx.createOscillator();
+  const lfoGain1 = ctx.createGain(); const lfoGain2 = ctx.createGain();
+  lfo.type='sine'; lfo.frequency.value = .08;
+  lfoGain1.gain.value = 12; lfoGain2.gain.value = 16;
+  lfo.connect(lfoGain1); lfo.connect(lfoGain2);
+  lfoGain1.connect(osc1.frequency); lfoGain2.connect(osc2.frequency); lfo.start();
+
+  ambientNodes = {master, osc1, osc2, noise, lfo};
+}
+function toggleAmbient(){
+  unlockAudio();
+  ambientEnabled = !ambientEnabled;
+  if(ambientNodes) ambientNodes.master.gain.setTargetAtTime(ambientEnabled ? .04 : 0, ensureAudio().currentTime, .08);
+  $("btnMute").textContent = ambientEnabled ? "🔈 Ambient On" : "🔇 Ambient Off";
+}
+
+function speakWord(word, rate=.84){
+  unlockAudio();
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(word);
+  u.lang='en-US'; u.rate=rate; u.pitch=1.02; u.volume=1;
+  if(selectedVoice) u.voice = selectedVoice;
+  speechSynthesis.speak(u);
+}
+
+function clearTimer(){ if(timerId) clearInterval(timerId); timerId=null; }
+function startTimer(){
+  clearTimer();
+  timer = 7;
+  $("timerText").textContent = timer;
+  $("timerText").style.color = 'var(--bad)';
+  timerId = setInterval(()=>{
+    timer--;
+    $("timerText").textContent = timer;
+    tickSound();
+    if(timer <= 2) $("timerText").style.color = 'var(--warn)';
+    if(timer <= 0){ clearTimer(); onTimeUp(); }
+  },1000);
+}
+
+function makeOrb(word, index){
+  const div = document.createElement('button');
+  div.className = 'orb';
+  div.innerHTML = `<span class="letter">${String.fromCharCode(65+index)}</span><span class="orb-label">${word}</span>`;
+  div.dataset.word = word;
+  div.addEventListener('click', ()=>handleWordChoice(word, div));
+  arena.appendChild(div);
+  const rect = arena.getBoundingClientRect();
+  const size = Math.min(132, Math.max(108, rect.width*0.12));
+  const x = Math.random() * Math.max(1, rect.width - size);
+  const y = Math.random() * Math.max(1, rect.height - size);
+  return {el:div, word, x, y, vx:(Math.random()*2.2+1.2)*(Math.random()>.5?1:-1), vy:(Math.random()*2.2+1.2)*(Math.random()>.5?1:-1), size};
+}
+function renderOrbs(){
+  arena.innerHTML='';
+  const options = shuffle(currentItem.options);
+  orbs = options.map((w,i)=>makeOrb(w,i));
+  physicsActive = true;
+  cancelAnimationFrame(animId);
+  animateOrbs();
+}
+function animateOrbs(){
+  if(!physicsActive) return;
+  const w = arena.clientWidth;
+  const h = arena.clientHeight;
+  for(let i=0;i<orbs.length;i++){
+    const a = orbs[i];
+    a.x += a.vx; a.y += a.vy;
+    if(a.x <= 0 || a.x + a.size >= w){ a.vx *= -1; a.x = Math.max(0, Math.min(a.x, w-a.size)); }
+    if(a.y <= 0 || a.y + a.size >= h){ a.vy *= -1; a.y = Math.max(0, Math.min(a.y, h-a.size)); }
+    for(let j=i+1;j<orbs.length;j++){
+      const b = orbs[j];
+      const ax = a.x + a.size/2, ay = a.y + a.size/2;
+      const bx = b.x + b.size/2, by = b.y + b.size/2;
+      const dx = bx-ax, dy = by-ay;
+      const dist = Math.hypot(dx,dy);
+      const minDist = (a.size+b.size)/2 - 8;
+      if(dist && dist < minDist){
+        [a.vx,b.vx] = [b.vx,a.vx];
+        [a.vy,b.vy] = [b.vy,a.vy];
+        const overlap = (minDist - dist)/2;
+        const nx = dx/dist, ny = dy/dist;
+        a.x -= nx*overlap; a.y -= ny*overlap;
+        b.x += nx*overlap; b.y += ny*overlap;
+      }
+    }
+    a.el.style.width = a.el.style.height = a.size+'px';
+    a.el.style.transform = `translate(${a.x}px,${a.y}px)`;
+  }
+  animId = requestAnimationFrame(animateOrbs);
+}
+function stopPhysics(){ physicsActive = false; cancelAnimationFrame(animId); }
+function disableOrbs(){ orbs.forEach(o=>o.el.disabled = true); }
+
+function pushResult(soundResult, meaningResult, point){
+  results.push({no:currentIndex+1,target:currentItem.target,meaning:currentItem.meaning,options:[...currentItem.options],soundResult,meaningResult,point});
+}
+function amendLast(meaningResult, point){
+  const r = results[results.length-1];
+  if(r){ r.meaningResult = meaningResult; r.point = point; }
+}
+
+function loadRound(){
+  clearTimer();
+  phase = 'sound';
+  currentItem = order[currentIndex];
+  $("gameTitle").innerHTML = `<span class="glow">Decode the Signal</span>`;
+  $("instruction").textContent = 'กดฟังสัญญาณ แล้วแตะลูกบอลคำที่ตรงกับเสียง';
+  $("subline").textContent = 'พร้อมแล้วค่อยกดฟังนะ นักบิน 🚀';
+  $("btnNext").style.display = 'none';
+  $("meaningWrap").style.display = 'none';
+  $("meaningWrap").innerHTML = '';
+  feedback('');
+  updateHud();
+  renderOrbs();
+  startTimer();
+}
+
+function handleWordChoice(word, btn){
+  if(phase !== 'sound') return;
+  clickSound();
+  clearTimer();
+  stopPhysics();
+  totalSecondsUsed += Math.max(1, 7 - timer);
+  disableOrbs();
+  if(word === currentItem.target){
+    soundCorrect++;
+    successSound(); explodeSound(); overlay('💥');
+    btn.classList.add('explode');
+    feedback(`ถูกต้อง! สัญญาณนี้คือ <b>${currentItem.target}</b>`);
+    pushResult('ฟังถูก','-',0);
+    setTimeout(()=>{
+      phase = 'meaning';
+      updateHud();
+      $("gameTitle").innerHTML = `<span class="glow">Meaning Decode</span>`;
+      $("instruction").textContent = `คำว่า "${currentItem.target}" แปลว่าอะไร`;
+      $("subline").textContent = 'เลือกคำแปลให้ถูกเพื่อปลดล็อกคะแนนเต็ม ✨';
+      arena.innerHTML = '';
+      showMeaningChoices();
+      startTimer();
+    }, 520);
+  }else{
+    soundMiss++;
+    failSound(); overlay('☄️');
+    feedback(`ยังไม่ใช่จ้า… คำที่ถูกคือ <b>${currentItem.target}</b> ได้ <b>0 คะแนน</b>`);
+    pushResult('ฟังผิด','-',0);
+    phase = 'post';
+    postRound();
+  }
+}
+
+function showMeaningChoices(){
+  const wrap = $("meaningWrap");
+  wrap.style.display = 'grid';
+  const choices = choiceMeanings(currentItem);
+  wrap.innerHTML = '';
+  choices.forEach((m,idx)=>{
+    const b = document.createElement('button');
+    b.className='meaning-btn';
+    b.innerHTML = `<span class="num">${idx+1}</span>${m}`;
+    b.onclick = ()=>handleMeaningChoice(m);
+    wrap.appendChild(b);
+  });
+}
+function disableMeaning(){ document.querySelectorAll('.meaning-btn').forEach(b=>b.disabled = true); }
+
+function handleMeaningChoice(meaning){
+  if(phase !== 'meaning') return;
+  clickSound();
+  clearTimer();
+  totalSecondsUsed += Math.max(1, 7 - timer);
+  disableMeaning();
+  if(meaning === currentItem.meaning){
+    meaningRight++; score += 2; successSound(); overlay('🚀');
+    feedback(`ยอดเยี่ยม! ถอดรหัสความหมายถูก ได้ <b>2 คะแนน</b>`);
+    amendLast('ความหมายถูก', 2);
+  }else{
+    meaningWrong++; score += 1; failSound(); overlay('🛰️');
+    feedback(`ฟังถูกแต่แปลยังไม่ตรง ได้ <b>1 คะแนน</b><br>คำแปลที่ถูกคือ <b>${currentItem.meaning}</b>`);
+    amendLast('ความหมายผิด', 1);
+  }
+  phase = 'post';
+  updateHud();
+  postRound();
+}
+
+function onTimeUp(){
+  if(phase === 'sound'){
+    stopPhysics();
+    soundMiss++; totalSecondsUsed += 7; failSound(); overlay('⌛');
+    feedback(`หมดเวลา! คำที่ถูกคือ <b>${currentItem.target}</b>`);
+    pushResult('หมดเวลา','-',0);
+    phase = 'post'; postRound();
+  }else if(phase === 'meaning'){
+    meaningWrong++; score += 1; totalSecondsUsed += 7; failSound(); overlay('🛸');
+    feedback(`หมดเวลาในด่านความหมาย ได้ <b>1 คะแนน</b><br>คำแปลที่ถูกคือ <b>${currentItem.meaning}</b>`);
+    amendLast('หมดเวลา',1);
+    phase = 'post'; postRound();
+  }
+  updateHud();
+}
+
+function postRound(){ $("btnNext").style.display='inline-block'; $("btnNext").textContent = currentIndex >= 29 ? 'สรุปผล' : 'Signal ต่อไป'; }
+function nextRound(){ currentIndex++; currentIndex >= 30 ? showSummary() : loadRound(); }
+
+function getRank(){
+  if(score >= 54) return ['🌌 Galactic Decoder','ฟังเก่งมาก แยกเสียงใกล้กันได้คมและแม่นสุด ๆ'];
+  if(score >= 44) return ['🚀 Stellar Listener','เก่งมาก! จับสัญญาณและถอดความหมายได้ดีมาก'];
+  if(score >= 32) return ['🧠 Neural Cadet','พื้นฐานแน่นขึ้นมากแล้ว ฝึกต่ออีกนิดจะเฉียบกว่านี้'];
+  return ['✨ Sound Explorer','เริ่มต้นดีมาก ลองใช้ Slow Signal แล้วเล่นซ้ำเพื่อความแม่นยำ'];
+}
+function showSummary(){
+  showScreen('screenSummary');
+  const [rank,text] = getRank();
+  $("sumName").textContent = player;
+  $("sumRank").textContent = rank;
+  $("sumScore").textContent = `${score} / 60`;
+  $("sumText").textContent = text;
+  $("stSound").textContent = `${soundCorrect} / 30`;
+  $("stMeanRight").textContent = meaningRight;
+  $("stMeanWrong").textContent = meaningWrong;
+  $("stMiss").textContent = soundMiss;
+  $("stTime").textContent = `${(totalSecondsUsed/30).toFixed(1)} วิ`;
+  const body = $("reviewBody"); body.innerHTML = '';
+  results.forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML = `<td>${r.no}</td><td><b>${r.target}</b></td><td>${r.meaning}</td><td>${r.options.join(' / ')}</td><td>${r.soundResult}${r.meaningResult && r.meaningResult !== '-' ? ' • '+r.meaningResult : ''} • <b>${r.point} คะแนน</b></td>`;
+    body.appendChild(tr);
+  });
+}
+
+function startGame(){
+  unlockAudio();
+  player = $("playerName").value.trim() || 'Galaxy Pilot';
+  order = shuffle(bank).slice(0,30);
+  currentIndex=0; score=0; soundCorrect=0; meaningRight=0; meaningWrong=0; soundMiss=0; totalSecondsUsed=0; results=[];
+  $("hudName").textContent = `👤 Pilot: ${player}`;
+  showScreen('screenGame');
+  updateHud();
+  loadRound();
+}
+
+$("btnHow").onclick = ()=>{ clickSound(); showScreen('screenHow'); };
+$("btnBackHome").onclick = ()=>{ clickSound(); showScreen('screenStart'); };
+$("btnStart").onclick = ()=>{ clickSound(); startGame(); };
+$("btnStart2").onclick = ()=>{ clickSound(); startGame(); };
+$("btnHome").onclick = ()=>{ clickSound(); speechSynthesis.cancel(); clearTimer(); stopPhysics(); showScreen('screenStart'); };
+$("btnListen").onclick = ()=>{ clickSound(); speakWord(currentItem.target,.84); feedback('🔊 AI กำลังส่งสัญญาณ... ฟังให้ดีนะ'); };
+$("btnSlow").onclick = ()=>{ clickSound(); speakWord(currentItem.target,.52); feedback('🐢 Slow Signal ถูกส่งแล้ว ฟังช้า ๆ ได้เลย'); };
+$("btnNext").onclick = ()=>{ clickSound(); nextRound(); };
+$("btnReview").onclick = ()=>{ clickSound(); const box=$("reviewWrap"); const open = box.style.display !== 'none'; box.style.display = open ? 'none' : 'block'; $("btnReview").textContent = open ? 'ดูเฉลย' : 'ซ่อนเฉลย'; };
+$("btnReplay").onclick = ()=>{ clickSound(); showScreen('screenStart'); };
+$("btnMute").onclick = ()=>{ clickSound(); toggleAmbient(); };
+
+["btnHow","btnBackHome","btnStart","btnStart2","btnHome","btnListen","btnSlow","btnNext","btnReview","btnReplay","btnMute"].forEach(id=>$(id).addEventListener('pointerdown', unlockAudio));
+document.body.addEventListener('pointerdown', unlockAudio, {once:true});
+window.addEventListener('resize', ()=>{ if(physicsActive){ const rect = arena.getBoundingClientRect(); orbs.forEach(o=>{ o.size = Math.min(132, Math.max(108, rect.width*0.12)); o.x = Math.min(o.x, rect.width-o.size); o.y = Math.min(o.y, rect.height-o.size); }); } });
+
+initStars();
+</script>
+</body>
+</html>
